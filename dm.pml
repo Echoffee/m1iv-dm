@@ -1,5 +1,6 @@
 #define N 5
 bool activeState[N];
+bool leaderState[N];
 
 chan pipes[N] = [1] of {byte};
 
@@ -28,7 +29,7 @@ init{
 
 
     for (currentIndex : 0 .. N-1){
-        printf("RUN\n");
+        printf("RUN proc nb %d\n", callOrder[currentIndex]);
         run dkrProc(callOrder[currentIndex]);
     }
 
@@ -52,7 +53,7 @@ proctype dkrProc(byte id){
 
     pipes[reciever] ? val1;
     if
-    :: val == val1 -> activeState[id] = true;
+    :: val == val1 -> leaderState[id] = true;
     :: else ->
         //B
         pipes[id] ! val1;
@@ -60,18 +61,20 @@ proctype dkrProc(byte id){
         if
         :: (val1 < val || val1 < val2) -> activeState[id] = false;
         :: else -> leader = val1; goto petitA;
+
         fi
     fi
+
     atomic{
         byte i = 0;
         byte j;
         for (j : 0 .. N - 1){
             if
-            :: activeState[j] -> i = i + 1;
+            :: leaderState[j] -> i = i + 1;
             :: else ->
             fi
         }
 
-        //assert(i == 1);
+        assert(i >= 1);
     }
 }
