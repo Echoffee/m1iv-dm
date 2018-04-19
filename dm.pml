@@ -150,6 +150,6 @@ ltl prop2 { [] (leaderProcCount < 2)}
 // 3. Leader proc must have the maximum 'leader' value
 //???
 
-// 4. Loop count (b->a) is capped at N + 1)
-ltl prop4 { [] (loopCount <= N + 1)};
+// 4. Loop count (b->a) is capped at N + 1
+ltl prop4 { [] (loopCount <= N * (N + 1))};
 
