@@ -1,9 +1,9 @@
-#define N 4
+#define N 5
 bool leaderState[N];
 byte order[N];
 bool hasEnded = false;
 chan pipes[N] = [1] of {byte};
-
+chan order2 = [N] of {byte};
 
 //prop vars
 byte leaderProcCount = 0;
@@ -13,51 +13,65 @@ byte computedLeader = 0;
 byte computedMaximum = 0;
 bool isMaximumCorrect = false;
 
-init{
-	int initState;
-	for (initState : 0 .. N - 1){
-		order[initState] = initState;
-	}
+// init{
+// 	int initState;
+// 	for (initState : 0 .. N - 1){
+// 		order[initState] = initState;
+// 	}
    
-	byte randNum;
-	byte shuffle;
-	byte randIndex;
-	byte otherIndex;
-	byte currentIndex = 0;
+// 	byte randNum;
+// 	byte shuffle;
+// 	byte randIndex;
+// 	byte otherIndex;
+// 	byte currentIndex = 0;
+// 	byte swap = 0;
+// 	do
+
+// 	:: swap < N ->
+// 		select(randIndex : 0 .. N - 1);
+// 		//select(otherIndex : 0 .. N - 1);
+// 		otherIndex = (randIndex == 0 -> N - 1 : randIndex - 1);
+// 		byte tmp = order[randIndex];
+// 		order[randIndex] = order[otherIndex];
+// 		order[otherIndex] = tmp;
+// 		swap++;
+// 	::
+// 		break;
+// 	od
 	
-	select(randNum : 1 .. N);
-	for (shuffle : 0 .. randNum){
-		select(randIndex : 0 .. N - 1);
-		select(otherIndex : 0 .. N - 1);
-		// otherIndex = (randIndex == 0 ? N - 1 : randIndex - 1);
-		byte tmp = order[randIndex];
-		order[randIndex] = order[otherIndex];
-		order[otherIndex] = tmp;
-	}
 
-	atomic{
-		for (currentIndex : 0 .. N-1){
-			//printf("RUN proc nb %d\n", order[currentIndex]);
-			run dkrProc2(order[currentIndex]);
-		}
-	}
+// 	atomic{
+// 		for (currentIndex : 0 .. N-1){
+// 			//printf("RUN proc nb %d\n", order[currentIndex]);
+// 			run dkrProc2(order[currentIndex]);
+// 		}
+// 	}
 
+// }
+
+active [N] proctype starter(){
+	order2 ! _pid;
+	byte id;
+	order2 ? id;
+	run dkrProc2(id);
 }
 
 proctype dkrProc2(byte id){
+	// byte id = _pid;
 	bool activeMode = true;
-	byte leader = id;
+	byte leader = _pid;
 	byte val;
 	byte val1;
 	byte val2;
 	byte reciever;
 
 	reciever = (id == 0 -> N - 1 : id - 1);
+	printf("reciever for pid %d is %d", id, reciever);
 	//a
 	petitA2:
 	atomic{
 		loopCount++;
-		//printf("loop %d\n", loopCount);
+		printf("loop %d\n", loopCount);
 	}
 
 	val = leader;
@@ -66,7 +80,7 @@ proctype dkrProc2(byte id){
 	if
 	:: val == val1 ->
 		leaderState[id] = true;
-		//printf("proc %d is now leader\n", id);
+		printf("proc %d is now leader\n", id);
 		atomic{
 			leaderProcCount++;
 		}
@@ -91,7 +105,7 @@ proctype dkrProc2(byte id){
 	fi
 
 	//passive mode
-	//printf("proc %d goes into passive mode\n", id);
+	printf("proc %d goes into passive mode\n", id);
 	byte data;
 	do
 	:: !hasEnded && full(pipes[reciever]) ->
