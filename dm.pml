@@ -12,6 +12,9 @@ byte loopCount = 0;
 byte computedLeader = 0;
 byte computedMaximum = 0;
 bool isMaximumCorrect = false;
+int leaderPid = -1;
+byte maxLeaderValue = 0;
+byte leaderValue = 0;
 
 // init{
 // 	int initState;
@@ -80,6 +83,8 @@ proctype dkrProc2(byte id){
 	if
 	:: val == val1 ->
 		leaderState[id] = true;
+		leaderValue = leader;
+		leaderPid = _pid;
 		printf("proc %d is now leader\n", id);
 		atomic{
 			leaderProcCount++;
@@ -94,6 +99,10 @@ proctype dkrProc2(byte id){
 			activeMode = false;
 		:: else ->
 			leader = val1;
+			atomic{
+				maxLeaderValue = (leader > maxLeaderValue -> leader : maxLeaderValue);
+				assert(leader <= maxLeaderValue);
+			}
 			goto petitA2;
 		fi
 	fi
@@ -148,7 +157,8 @@ ltl prop1 { <> (leaderProcCount > 0)}
 ltl prop2 { [] (leaderProcCount < 2)}
 
 // 3. Leader proc must have the maximum 'leader' value
-//???
+//ltl prop3 { [] (leaderPid != -1 -> leaderValue == maxLeaderValue)}
+ltl prop3 {<> [] (leaderValue == maxLeaderValue)}
 
 // 4. Loop count (b->a) is capped at N + 1
 ltl prop4 { [] (loopCount <= N * (N + 1))};
